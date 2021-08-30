@@ -31,12 +31,12 @@ public:
     void
     set_property(const std::string &element, const std::string &property, std::variant<int, float, std::string> value);
 
-    void set_pad_added_handler(const std::string &element,
+    void add_pad_added_handler(const std::string &element,
                                const std::function<std::optional<std::string>(const std::string &)>& matcher);
 
     static void pad_added_handler(GstElement *src, GstPad *new_pad,
-                                  std::tuple<std::map<std::string, GstElement *>, std::function<std::optional<std::string>(
-                                          const std::string &)>> *data);
+                                  std::tuple<std::map<std::string, GstElement *>,
+                                          std::vector<std::function<std::optional<std::string>( const std::string &)>>> *data);
 
 private:
     void post_fix();
@@ -45,8 +45,8 @@ private:
 
     std::map<std::string, std::vector<std::pair<std::string, GstElement *>>> _pipelines;
     std::map<std::string, GstElement *> _elements;
-    std::tuple<std::map<std::string, GstElement *>, std::function<std::optional<std::string>(
-            const std::string &)>> _matcher;
+    std::vector<std::function<std::optional<std::string>( const std::string &)>> _matcher;
+    std::tuple< std::map<std::string, GstElement *>, std::vector<std::function<std::optional<std::string>(const std::string &)>>> _signal_matcher;
     std::string _element_to_postfix;
     bool _stopped;
     GstElement *_pipeline;

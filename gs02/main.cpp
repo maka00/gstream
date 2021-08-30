@@ -25,13 +25,14 @@ void stream_from_uri() {
     gs.add_element("video", "autovideosink", "videosink");
     gs.link_pipeline();
     gs.set_property("source", "uri","https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm");
-    gs.set_pad_added_handler("source",[](const std::string& pattern) {
+    gs.add_pad_added_handler("source",[](const std::string& pattern) {
         std::optional<std::string> result;
-        if (pattern.find("audio/x-raw") != std::string::npos)
-            result = std::string("convert");
-        else if (pattern.find("video/x-raw") != std::string::npos)
-            result = std::string("vconvert");
-        return result;
+        return (pattern.find("audio/x-raw") != std::string::npos) ? std::string("convert") : result;
+    });
+
+    gs.add_pad_added_handler("source",[](const std::string& pattern) {
+        std::optional<std::string> result;
+        return (pattern.find("video/x-raw") != std::string::npos) ? std::string("vconvert") : result;
     });
     gs.run();
 }

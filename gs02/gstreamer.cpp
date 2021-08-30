@@ -38,13 +38,13 @@ gstreamer::add_element(const std::string &bin_name, const std::string &plugin_na
 }
 
 void gstreamer::link_pipeline() {
-    for (const auto& item: _pipelines) {
+    for (const auto &item: _pipelines) {
         std::for_each(std::begin(item.second), std::end(item.second), [this](auto v) {
             gst_bin_add(GST_BIN(_pipeline), v.second);
             _elements.emplace(v.first, v.second);
         });
     }
-    for (const auto& item: _pipelines) {
+    for (const auto &item: _pipelines) {
         if (item.second.empty())
             continue;
         std::accumulate(std::begin(item.second), std::end(item.second), item.second.begin()->second,
@@ -93,6 +93,10 @@ void gstreamer::parse_message(GstMessage *msg) {
             case GST_MESSAGE_ERROR: {
                 gst_message_parse_error(msg, &err, &debug_info);
                 SPDLOG_ERROR("Error received from element {}: {}", GST_OBJECT_NAME(msg->src), err->message);
+                if (std::string(err->message) == std::string( "Output window was closed")) {
+                    _stopped = true;
+                    return;
+                }
                 SPDLOG_ERROR("Debugging information: {}", debug_info ? debug_info : "none");
                 g_clear_error(&err);
                 g_free(debug_info);
@@ -126,9 +130,9 @@ void gstreamer::set_property(const std::string &element, const std::string &prop
 
 }
 
-void gstreamer::set_pad_added_handler(const std::string &element,
-                                      const std::function<std::optional<std::string>(const std::string &)>& matcher) {
-    _matcher = std::make_tuple(_elements, matcher);
+void gstreamer::add_pad_added_handler(const std::string &element,
+                                      const std::function<std::optional<std::string>(const std::string &)> &matcher) {
+    _matcher.push_back(matcher);
     _element_to_postfix = element;
 }
 
@@ -138,16 +142,18 @@ void gstreamer::post_fix() {
         SPDLOG_ERROR("Gst Element '{}' not known", _element_to_postfix);
         throw std::logic_error("gst element unknown");
     }
-
-    g_signal_connect(it->second, "pad_added", G_CALLBACK(gstreamer::pad_added_handler), &_matcher);
+    _signal_matcher = std::make_tuple(_elements, _matcher);
+    g_signal_connect(it->second, "pad_added", G_CALLBACK(gstreamer::pad_added_handler), &_signal_matcher);
 
 }
 
 void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
-                                  std::tuple<std::map<std::string, GstElement *>, std::function<std::optional<std::string>(
-                                          const std::string &)>> *data) {
+                                  std::tuple<
+                                          std::map<std::string, GstElement *>,
+                                          std::vector<std::function<std::optional<std::string>(
+                                                  const std::string &)>>> *data) {
     SPDLOG_INFO("pad_added_handler");
-    GstPad *sink_pad = nullptr; //gst_element_get_static_pad(data->convert, "sink");
+    GstPad *sink_pad = nullptr;
     GstPadLinkReturn ret;
     GstCaps *new_pad_caps = nullptr;
     GstStructure *new_pad_struct = nullptr;
@@ -155,7 +161,8 @@ void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
     BOOST_SCOPE_EXIT_ALL(new_pad_caps, sink_pad) {
                                                      if (new_pad_caps != nullptr)
                                                          gst_caps_unref(new_pad_caps);
-                                                     gst_object_unref(sink_pad);
+                                                     if (sink_pad != nullptr)
+                                                         gst_object_unref(sink_pad);
                                                  };
 
     SPDLOG_INFO("Received new pad '{}' from '{}'.", GST_PAD_NAME(new_pad), GST_ELEMENT_NAME(src));
@@ -164,26 +171,29 @@ void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
     new_pad_caps = gst_pad_get_current_caps(new_pad);
     new_pad_struct = gst_caps_get_structure(new_pad_caps, 0);
     new_pad_type = gst_structure_get_name(new_pad_struct);
-    auto[mapper, fun] = *data;
-    auto link = fun(new_pad_type);
-    if (link) {
-        sink_pad = gst_element_get_static_pad(mapper[*link], "sink");
-    } else {
-        SPDLOG_INFO("It has type '{}' which is not mapped. Ignoring.", new_pad_type);
-        return;
+    auto[mapper, functions] = *data;
+    for (auto fun: functions) {
+        auto link = fun(new_pad_type);
 
-    }
-    /* If our converter is already linked, we have nothing to do here */
-    if (gst_pad_is_linked(sink_pad)) {
-        SPDLOG_ERROR("We are already linked. Ignoring.");
-        return;
-    }
+        if (link) {
+            sink_pad = gst_element_get_static_pad(mapper[*link], "sink");
+        } else {
+            SPDLOG_INFO("It has type '{}' which is not mapped. Ignoring.", new_pad_type);
+            continue;
 
-    /* Attempt the link */
-    ret = gst_pad_link(new_pad, sink_pad);
-    if (GST_PAD_LINK_FAILED (ret)) {
-        SPDLOG_ERROR("Type is '{}' but link failed.", new_pad_type);
-    } else {
-        SPDLOG_ERROR("Link succeeded (type '{}').", new_pad_type);
+        }
+        /* If our converter is already linked, we have nothing to do here */
+        if (gst_pad_is_linked(sink_pad)) {
+            SPDLOG_ERROR("We are already linked. Ignoring.");
+            return;
+        }
+
+        /* Attempt the link */
+        ret = gst_pad_link(new_pad, sink_pad);
+        if (GST_PAD_LINK_FAILED (ret)) {
+            SPDLOG_ERROR("Type is '{}' but link failed.", new_pad_type);
+        } else {
+            SPDLOG_ERROR("Link succeeded (type '{}').", new_pad_type);
+        }
     }
 }
