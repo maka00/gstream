@@ -40,7 +40,7 @@ void stream_from_uri() {
 
 int main(int argc, char *argv[]) {
     static auto console = spdlog::stdout_color_mt("console");
-    spdlog::set_pattern("[%H:%M:%S %z][%s][%!][%#] %v");
+    spdlog::set_pattern("[%H:%M:%S.%e][%s][%!][%#] %v");
     stream_from_uri();
     return 0;
 }
