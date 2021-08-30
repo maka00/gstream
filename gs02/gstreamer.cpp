@@ -173,19 +173,17 @@ void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
     new_pad_type = gst_structure_get_name(new_pad_struct);
     auto[mapper, functions] = *data;
     for (const auto &fun: functions) {
-        const auto link = fun(new_pad_type);
-
+        auto link = fun(new_pad_type);
         if (link) {
             sink_pad = gst_element_get_static_pad(mapper[*link], "sink");
         } else {
             SPDLOG_INFO("It has type '{}' which is not mapped. Ignoring.", new_pad_type);
             continue;
-
         }
         /* If our converter is already linked, we have nothing to do here */
         if (gst_pad_is_linked(sink_pad)) {
             SPDLOG_ERROR("We are already linked. Ignoring.");
-            return;
+            continue;
         }
 
         /* Attempt the link */
