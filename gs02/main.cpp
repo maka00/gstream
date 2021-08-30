@@ -17,12 +17,12 @@ void test_pattern() {
 
 void stream_from_uri() {
     gstreamer gs("test-pipeline");
-    gs.add_element("one", "uridecodebin", "source");
-    gs.add_element("two", "audioconvert", "convert");
-    gs.add_element("two", "audioresample", "resample");
-    gs.add_element("two", "autoaudiosink", "audiosink");
-    gs.add_element("three", "videoconvert", "vconvert");
-    gs.add_element("three", "autovideosink", "videosink");
+    gs.add_element("unbound", "uridecodebin", "source");
+    gs.add_element("audio", "audioconvert", "convert");
+    gs.add_element("audio", "audioresample", "resample");
+    gs.add_element("audio", "autoaudiosink", "audiosink");
+    gs.add_element("video", "videoconvert", "vconvert");
+    gs.add_element("video", "autovideosink", "videosink");
     gs.link_pipeline();
     gs.set_property("source", "uri","https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm");
     gs.set_pad_added_handler("source",[](const std::string& pattern) {

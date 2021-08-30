@@ -158,7 +158,7 @@ void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
                                                      gst_object_unref(sink_pad);
                                                  };
 
-    SPDLOG_INFO("Received new pad '{}' from '{}':\n", GST_PAD_NAME(new_pad), GST_ELEMENT_NAME(src));
+    SPDLOG_INFO("Received new pad '{}' from '{}'.", GST_PAD_NAME(new_pad), GST_ELEMENT_NAME(src));
 
     /* Check the new pad's type */
     new_pad_caps = gst_pad_get_current_caps(new_pad);
