@@ -27,4 +27,5 @@ set( LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/gs)
 add_subdirectory(${PROJECT_SOURCE_DIR}/gs01)
+add_subdirectory(${PROJECT_SOURCE_DIR}/gs02)
 add_subdirectory(${PROJECT_SOURCE_DIR}/papp)

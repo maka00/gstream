@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(gs-01)
+project(gs-02)
 
 if(MSVC)
     add_compile_options("/W4" "$<$<CONFIG:RELEASE>:/O2>")
@@ -15,7 +15,7 @@ else()
         # nothing special for gcc at the moment
     endif()
 endif()
-set(SOURCES main.cpp)
+set(SOURCES main.cpp gstreamer.cpp gstreamer.h)
 if (WIN32)
 	SET (Boost_USE_STATIC_LIBS ON)
 endif(WIN32)

@@ -1,8 +1,13 @@
 #include<gst/gst.h>
 #include <iostream>
 #include <boost/scope_exit.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+
 
 int main_threading(int argc, char *argv[]) {
+    SPDLOG_INFO("function {} called", __FUNCTION__ );
     GstElement *pipeline, *audio_source, *tee, *audio_queue, *audio_convert, *audio_resample, *audio_sink;
     GstElement *video_queue, *visual, *video_convert, *video_sink;
     GstBus *bus;
@@ -27,7 +32,7 @@ int main_threading(int argc, char *argv[]) {
 
     if (!pipeline || !audio_source || !tee || !audio_queue || !audio_convert || !audio_resample || !audio_sink ||
         !video_queue || !visual || !video_convert || !video_sink) {
-        g_printerr("Not all elements could be created!\n");
+        SPDLOG_ERROR("Not all elementes could be created!");
         return -1;
     }
 
@@ -39,20 +44,20 @@ int main_threading(int argc, char *argv[]) {
     if(gst_element_link_many(audio_source, tee, nullptr) != true ||
             gst_element_link_many(audio_queue, audio_convert, audio_resample, audio_sink, nullptr) != true ||
             gst_element_link_many(video_queue, visual, video_convert, video_sink, nullptr) != true) {
-        g_printerr("Tee could not be linked.\n");
+        SPDLOG_ERROR("Tee could not be linked.");
         gst_object_unref(pipeline);
         return -1;
     }
 
     tee_audio_pad = gst_element_get_request_pad(tee, "src_%u");
-    g_print("Obtained request pad %s for audio branch.\n", gst_pad_get_name(tee_audio_pad));
+    SPDLOG_INFO("Obtained request pad {} for audio branch.", gst_pad_get_name(tee_audio_pad));
     queue_audio_pad = gst_element_get_static_pad(audio_queue, "sink");
     tee_video_pad = gst_element_get_request_pad(tee,"src_%u");
-    g_print("Obtained request pad %s for video branch.\n", gst_pad_get_name(tee_video_pad));
+    SPDLOG_INFO("Obtained request pad {} for video branch.", gst_pad_get_name(tee_video_pad));
     queue_video_pad = gst_element_get_static_pad(video_queue, "sink");
     if(gst_pad_link(tee_audio_pad, queue_audio_pad) != GST_PAD_LINK_OK ||
        gst_pad_link(tee_video_pad, queue_video_pad) != GST_PAD_LINK_OK ) {
-        g_printerr("Tee could not be linked.\n");
+        SPDLOG_ERROR("Tee could not be linked.");
         gst_object_unref(pipeline);
         return -1;
     }
@@ -288,5 +293,8 @@ void parse_message(GstMessage *msg) {
 }
 
 int main(int argc, char *argv[]) {
-    return main_video_threading(argc, argv);
+    static auto console = spdlog::stdout_color_mt("console");
+    spdlog::set_pattern("[%H:%M:%S %z][%s][%!][%#] %v");
+    return main_threading(argc, argv);
+    //return main_video_threading(argc, argv);
 }
