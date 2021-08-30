@@ -11,7 +11,7 @@ void test_pattern() {
     gs.add_element("one", "videoconvert", "convert");
     gs.add_element("one", "autovideosink", "sink");
     gs.link_pipeline();
-    gs.set_property("source", "pattern",0);
+    gs.set_property("source", "pattern", 0);
     gs.run();
 }
 
@@ -24,13 +24,14 @@ void stream_from_uri() {
     gs.add_element("video", "videoconvert", "vconvert");
     gs.add_element("video", "autovideosink", "videosink");
     gs.link_pipeline();
-    gs.set_property("source", "uri","https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm");
-    gs.add_pad_added_handler("source",[](const std::string& pattern) {
+    gs.set_property("source", "uri",
+                    "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm");
+    gs.add_pad_added_handler("source", [](const std::string &pattern) {
         std::optional<std::string> result;
         return (pattern.find("audio/x-raw") != std::string::npos) ? std::string("convert") : result;
     });
 
-    gs.add_pad_added_handler("source",[](const std::string& pattern) {
+    gs.add_pad_added_handler("source", [](const std::string &pattern) {
         std::optional<std::string> result;
         return (pattern.find("video/x-raw") != std::string::npos) ? std::string("vconvert") : result;
     });

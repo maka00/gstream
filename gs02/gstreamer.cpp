@@ -93,7 +93,7 @@ void gstreamer::parse_message(GstMessage *msg) {
             case GST_MESSAGE_ERROR: {
                 gst_message_parse_error(msg, &err, &debug_info);
                 SPDLOG_ERROR("Error received from element {}: {}", GST_OBJECT_NAME(msg->src), err->message);
-                if (std::string(err->message) == std::string( "Output window was closed")) {
+                if (std::string(err->message) == std::string("Output window was closed")) {
                     _stopped = true;
                     return;
                 }
@@ -172,8 +172,8 @@ void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
     new_pad_struct = gst_caps_get_structure(new_pad_caps, 0);
     new_pad_type = gst_structure_get_name(new_pad_struct);
     auto[mapper, functions] = *data;
-    for (auto fun: functions) {
-        auto link = fun(new_pad_type);
+    for (const auto &fun: functions) {
+        const auto link = fun(new_pad_type);
 
         if (link) {
             sink_pad = gst_element_get_static_pad(mapper[*link], "sink");
