@@ -132,10 +132,6 @@ void gstreamer::set_property(const std::string &element, const std::string &prop
 
 void gstreamer::add_pad_added_handler(std::string element,
                                       std::function<std::optional<std::string>(const std::string &)> matcher) {
-    auto elements = _elements;
-    if (!elements.contains(element)) {
-        elements.insert({element,_elements[element]});
-    }
     auto matching = _signal_matcher.filter_mapper;
     if (matching.contains(element)) {
         matching[element].push_back(matcher);
