@@ -16,6 +16,8 @@
 
 class gstreamer {
 public:
+    using filter_t = std::vector<std::function<std::optional<std::string>(const std::string &)>>;
+
     explicit gstreamer(const std::string &pipeline_name);
 
     virtual ~gstreamer();
@@ -31,25 +33,24 @@ public:
     void
     set_property(const std::string &element, const std::string &property, std::variant<int, float, std::string> value);
 
-    void add_pad_added_handler(const std::string &element,
-                               const std::function<std::optional<std::string>(const std::string &)> &matcher);
-
-    static void pad_added_handler(GstElement *src, GstPad *new_pad,
-                                  std::tuple<std::map<std::string, GstElement *>,
-                                          std::vector<std::function<std::optional<std::string>(
-                                                  const std::string &)>>> *data);
+    void add_pad_added_handler(std::string element,
+                               std::function<std::optional<std::string>(const std::string &)> matcher);
 
 private:
+    struct pad_handler_struct {
+        std::map<std::string, GstElement *> elment_mapper;
+        std::map<std::string, filter_t> filter_mapper;
+    };
+
+    static void pad_added_handler(GstElement *src, GstPad *new_pad, pad_handler_struct *data);
+
     void post_fix();
 
     void parse_message(GstMessage *msg);
 
     std::map<std::string, std::vector<std::pair<std::string, GstElement *>>> _pipelines;
     std::map<std::string, GstElement *> _elements;
-    std::vector<std::function<std::optional<std::string>(const std::string &)>> _matcher;
-    std::tuple<std::map<std::string, GstElement *>, std::vector<std::function<std::optional<std::string>(
-            const std::string &)>>> _signal_matcher;
-    std::string _element_to_postfix;
+    pad_handler_struct _signal_matcher;
     bool _stopped;
     GstElement *_pipeline;
 

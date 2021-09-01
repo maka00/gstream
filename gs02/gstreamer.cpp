@@ -130,28 +130,33 @@ void gstreamer::set_property(const std::string &element, const std::string &prop
 
 }
 
-void gstreamer::add_pad_added_handler(const std::string &element,
-                                      const std::function<std::optional<std::string>(const std::string &)> &matcher) {
-    _matcher.push_back(matcher);
-    _element_to_postfix = element;
+void gstreamer::add_pad_added_handler(std::string element,
+                                      std::function<std::optional<std::string>(const std::string &)> matcher) {
+    auto elements = _elements;
+    if (!elements.contains(element)) {
+        elements.insert({element,_elements[element]});
+    }
+    auto matching = _signal_matcher.filter_mapper;
+    if (matching.contains(element)) {
+        matching[element].push_back(matcher);
+    } else
+        matching.insert( {std::move(element), {matcher}} );
+    _signal_matcher = {_elements, matching};
 }
 
 void gstreamer::post_fix() {
-    auto it = _elements.find(_element_to_postfix);
-    if (it == _elements.end()) {
-        SPDLOG_ERROR("Gst Element '{}' not known", _element_to_postfix);
-        throw std::logic_error("gst element unknown");
+    for( auto matching : _signal_matcher.filter_mapper) {
+        auto it = _elements.find(matching.first);
+        if (it == _elements.end()) {
+            SPDLOG_ERROR("Gst Element '{}' not known", matching.first);
+            throw std::logic_error("gst element unknown");
+        }
+        g_signal_connect(it->second, "pad_added", G_CALLBACK(gstreamer::pad_added_handler), &_signal_matcher);
     }
-    _signal_matcher = std::make_tuple(_elements, _matcher);
-    g_signal_connect(it->second, "pad_added", G_CALLBACK(gstreamer::pad_added_handler), &_signal_matcher);
-
 }
 
 void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
-                                  std::tuple<
-                                          std::map<std::string, GstElement *>,
-                                          std::vector<std::function<std::optional<std::string>(
-                                                  const std::string &)>>> *data) {
+                                  pad_handler_struct *data) {
     SPDLOG_INFO("pad_added_handler");
     GstPad *sink_pad = nullptr;
     GstPadLinkReturn ret;
@@ -172,12 +177,12 @@ void gstreamer::pad_added_handler(GstElement *src, GstPad *new_pad,
     new_pad_struct = gst_caps_get_structure(new_pad_caps, 0);
     new_pad_type = gst_structure_get_name(new_pad_struct);
     auto[mapper, functions] = *data;
-    for (const auto &fun: functions) {
+    for (const auto &fun: functions[std::string(GST_ELEMENT_NAME(src))]) {
         auto link = fun(new_pad_type);
         if (link) {
             sink_pad = gst_element_get_static_pad(mapper[*link], "sink");
         } else {
-            SPDLOG_INFO("It has type '{}' which is not mapped. Ignoring.", new_pad_type);
+            SPDLOG_INFO("It has type '{}' which is not mapped for {}. Ignoring.", new_pad_type, *link);
             continue;
         }
         /* If our converter is already linked, we have nothing to do here */
