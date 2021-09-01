@@ -136,12 +136,12 @@ void gstreamer::add_pad_added_handler(std::string element,
     if (matching.contains(element)) {
         matching[element].push_back(matcher);
     } else
-        matching.insert( {std::move(element), {matcher}} );
+        matching.insert({std::move(element), {matcher}});
     _signal_matcher = {_elements, matching};
 }
 
 void gstreamer::post_fix() {
-    for( auto matching : _signal_matcher.filter_mapper) {
+    for (const auto & matching: _signal_matcher.filter_mapper) {
         auto it = _elements.find(matching.first);
         if (it == _elements.end()) {
             SPDLOG_ERROR("Gst Element '{}' not known", matching.first);
