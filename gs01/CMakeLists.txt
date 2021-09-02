@@ -38,10 +38,6 @@ set_target_properties(${PROJECT_NAME}
         PROPERTIES
         DEBUG_POSTFIX "d"
         CXX_STANDARD 20
-        # CXX_EXTENSIONS OFF
-        #CMAKE_CXX_FLAGS_RELEASE "-O3"
-        #IMPORTED_LOCATION "${EXTERNAL_OPENMESH_LIB_DIR}/libOpenMeshCore.so"
-        #IMPORTED_LOCATION "${EXTERNAL_OPENMESH_LIB_DIR}/libOpenMeshTools.so"
         )
 
 target_include_directories(${PROJECT_NAME}
@@ -49,8 +45,8 @@ target_include_directories(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}
 
         PRIVATE
-        /usr/include/gstreamer-1.0
-        /usr/include/glib-2.0
+        PkgConfig::GStreamer
+        PkgConfig::GLib
 
         ${BOOST_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}

@@ -6,6 +6,7 @@
 #include "Poco/Util/HelpFormatter.h"
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/AutoPtr.h"
+#include <iostream>
 
 class SampleApp: public Poco::Util::Application
     /// This sample demonstrates some of the features of the Util::Application class,

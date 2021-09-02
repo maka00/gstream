@@ -25,7 +25,6 @@ find_package(Threads)
 find_package(PkgConfig REQUIRED)
 find_package(Boost COMPONENTS filesystem iostreams system program_options timer REQUIRED)
 find_package( OpenCV REQUIRED )
-# pkg_check_modules (OpenCV REQUIRED IMPORTED_TARGET opencv4)
 pkg_check_modules(GStreamer REQUIRED IMPORTED_TARGET gstreamer-1.0)
 pkg_check_modules(GLib REQUIRED IMPORTED_TARGET glib-2.0)
 
@@ -40,10 +39,6 @@ set_target_properties(${PROJECT_NAME}
         PROPERTIES
         DEBUG_POSTFIX "d"
         CXX_STANDARD 20
-        # CXX_EXTENSIONS OFF
-        #CMAKE_CXX_FLAGS_RELEASE "-O3"
-        #IMPORTED_LOCATION "${EXTERNAL_OPENMESH_LIB_DIR}/libOpenMeshCore.so"
-        #IMPORTED_LOCATION "${EXTERNAL_OPENMESH_LIB_DIR}/libOpenMeshTools.so"
         )
 
 target_include_directories(${PROJECT_NAME}
@@ -51,9 +46,6 @@ target_include_directories(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}
 
         PRIVATE
-        /usr/include/gstreamer-1.0
-        /usr/include/glib-2.0
-        /usr/include/opencv4
         ${BOOST_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
 
@@ -71,9 +63,6 @@ target_link_libraries(${PROJECT_NAME}
         Boost::program_options
         Boost::filesystem
         Boost::timer
-        #PkgConfig::GStreamer
-        #PkgConfig::GLib
-        #PkgConfig::OpenCV
         opencv_core
         opencv_videoio
         opencv_highgui
