@@ -3,7 +3,10 @@ gtest/1.10.0
 tbb/2020.0
 poco/1.11.0
 spdlog/1.9.2
-# gstreamer/1.18.4
+#opencv/4.5.3
+
+[options]
+opencv:contrib=True
 
 [generators]
 cmake
