@@ -1,14 +1,15 @@
 #include <sstream>
 #include "Poco/Poco.h"
-#include "Poco/Util/Application.h"
+#include "Poco/Util/ServerApplication.h"
 #include "Poco/Util/Option.h"
 #include "Poco/Util/OptionSet.h"
 #include "Poco/Util/HelpFormatter.h"
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/AutoPtr.h"
 #include <iostream>
+#include "rq_handler.h"
 
-class SampleApp: public Poco::Util::Application
+class SampleApp: public Poco::Util::ServerApplication
     /// This sample demonstrates some of the features of the Util::Application class,
     /// such as configuration file handling and command line arguments processing.
     ///
@@ -128,8 +129,14 @@ protected:
             {
                 logger().information(*it);
             }
-            logger().information("Application properties:");
-            printProperties("");
+            logger().information("App started");
+            Poco::Net::HTTPServer srv( new rq_factory, Poco::Net::ServerSocket(9090), new Poco::Net::HTTPServerParams);
+            srv.start();
+            logger().information("http server started on: http://127.0.0.1:9090");
+            waitForTerminationRequest();
+            srv.stop();
+            logger().information("http server stopped");
+
         }
         return Application::EXIT_OK;
     }
@@ -165,4 +172,4 @@ private:
     bool _helpRequested;
 };
 
-POCO_APP_MAIN(SampleApp)
+POCO_SERVER_MAIN(SampleApp)

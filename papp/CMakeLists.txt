@@ -15,7 +15,7 @@ else()
         # nothing special for gcc at the moment
     endif()
 endif()
-set(SOURCES main.cpp)
+set(SOURCES main.cpp rq_handler.cpp rq_handler.h)
 if (WIN32)
 	SET (Boost_USE_STATIC_LIBS ON)
 endif(WIN32)
@@ -24,6 +24,7 @@ endif(WIN32)
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 find_package(Boost COMPONENTS filesystem iostreams system program_options timer REQUIRED)
+find_package( OpenCV REQUIRED )
 pkg_check_modules(GStreamer REQUIRED IMPORTED_TARGET gstreamer-1.0)
 pkg_check_modules(GLib REQUIRED IMPORTED_TARGET glib-2.0)
 
@@ -71,6 +72,9 @@ target_link_libraries(${PROJECT_NAME}
         Boost::timer
         PkgConfig::GStreamer
         PkgConfig::GLib
+        opencv_core
+        opencv_videoio
+        opencv_highgui
         )
 target_compile_features(${PROJECT_NAME}
         PUBLIC
