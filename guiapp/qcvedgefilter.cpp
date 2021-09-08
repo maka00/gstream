@@ -25,13 +25,7 @@ QImage QVideoFrameToQImage( const QVideoFrame& videoFrame )
         f->glBindFramebuffer( GL_FRAMEBUFFER, static_cast<GLuint>( prevFbo ) );
         return image.rgbSwapped();
     } else if ( videoFrame.handleType() == QAbstractVideoBuffer::NoHandle){
-        QImage image(videoFrame.bits(),
-                     videoFrame.width(),
-                     videoFrame.height(),
-                     QVideoFrame::imageFormatFromPixelFormat(videoFrame.pixelFormat()));
-        std::cout << "test something " << image.sizeInBytes() << " " << image.height() << " [" << videoFrame.width() << " | " << videoFrame.height() << std::endl;
-        image = image.convertToFormat(QImage::Format_RGB888);
-        return image;
+        return QImage(videoFrame.image());
     } else {
         std::cout << "test unsupported handle" << std::endl;
     }
@@ -59,14 +53,11 @@ QVideoFrame qcvedgefilter_runnable::run(QVideoFrame *input, const QVideoSurfaceF
         std::cout << "test null" << std::endl;
         return QVideoFrame{};
     }
-    input->map(QAbstractVideoBuffer::ReadWrite);
+    input->map(QAbstractVideoBuffer::ReadOnly);
     QImage image = QVideoFrameToQImage(*input);
     QTransform myTransform;
     myTransform.rotate(180);
     image = image.transformed(myTransform);
-    image.save("test_0.jpeg");
-
-    std::cout << "test ok: " << image.sizeInBytes() << std::endl;
     input->unmap();
     return QVideoFrame(image);
 }
