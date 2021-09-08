@@ -3,6 +3,7 @@ project(guiapp)
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${QtQml_INCLUDE_DIRS})
 add_definitions(${Qt5Widgets_DEFINITIONS} ${QtQml_DEFINITIONS} ${${Qt5Quick_DEFINITIONS}})
 find_package(Qt5 COMPONENTS Widgets Multimedia Qml Quick REQUIRED)
+find_package( OpenCV REQUIRED )
 qt5_add_resources(QT_RESOURCES qml.qrc)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 set(CMAKE_AUTOMOC ON)
@@ -49,4 +50,7 @@ target_link_libraries(${PROJECT_NAME}
         Qt5::Multimedia
         Qt5::Qml
         Qt5::Quick
+        opencv_core
+        opencv_videoio
+        opencv_highgui
         )

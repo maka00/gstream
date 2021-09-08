@@ -3,6 +3,10 @@
 //
 
 #include "qcvedgefilter.h"
+#include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/core.hpp>
+#include <opencv4/opencv2/highgui.hpp>
+#include <opencv4/opencv2/imgproc.hpp>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QQmlContext>
@@ -33,6 +37,23 @@ QImage QVideoFrameToQImage( const QVideoFrame& videoFrame )
     return QImage();
 }
 
+QImage Mat2QImage(const cv::Mat & src)
+{
+
+    cv::Mat temp;
+    cv::cvtColor(src, temp,cv::COLOR_BGR2RGB);
+    QImage dest(temp.data, temp.cols, temp.rows, temp.step, QImage::Format_RGB888);
+    return dest.copy();
+}
+
+cv::Mat QImage2Mat(const QImage & src)
+{
+    cv::Mat tmp(src.height(),src.width(),CV_8UC4,(uchar*)src.bits(),src.bytesPerLine());
+    cv::Mat result; // deep copy just in case (my lack of knowledge with open cv)
+    cv::cvtColor(tmp, result,cv::COLOR_RGB2BGR);
+    return result;
+}
+
 QVideoFilterRunnable *qcvedgefilter::createFilterRunnable() {
     return new qcvedgefilter_runnable();
 }
@@ -55,9 +76,19 @@ QVideoFrame qcvedgefilter_runnable::run(QVideoFrame *input, const QVideoSurfaceF
     }
     input->map(QAbstractVideoBuffer::ReadOnly);
     QImage image = QVideoFrameToQImage(*input);
-    QTransform myTransform;
-    myTransform.rotate(180);
-    image = image.transformed(myTransform);
+    cv::Mat img;
+    cv::Mat greyimg, blurredimg;
+    cv::Mat edges;
+    cv::Mat flipped;
+    auto img_frmt = image.format();
+    img = QImage2Mat(image);
+    cv::cvtColor(img, greyimg,cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(greyimg,blurredimg,cv::Size(5,5),0);
+    cv::Canny(blurredimg,edges,100,300,3,false);
+    cv::flip(edges,flipped,1);
+    QImage image_res;
+    image_res = Mat2QImage(flipped);
+    image_res = image_res.convertToFormat(img_frmt);
     input->unmap();
-    return QVideoFrame(image);
+    return QVideoFrame{image_res};
 }
