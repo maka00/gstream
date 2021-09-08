@@ -61,7 +61,7 @@ QVideoFilterRunnable *qcvedgefilter::createFilterRunnable() {
 qcvedgefilter::qcvedgefilter(QObject* parent) : QAbstractVideoFilter(parent), _threshold1(50), _threshold2(30) {
 }
 
-qcvedgefilter_runnable::qcvedgefilter_runnable(qcvedgefilter* filter) : _filter(filter), _threshold1(50), _threshold2(30) {
+qcvedgefilter_runnable::qcvedgefilter_runnable(qcvedgefilter* filter) : _filter(filter), _threshold1(filter->_threshold1), _threshold2(filter->_threshold2) {
     QObject::connect(_filter,SIGNAL(configChanged()),this,SLOT(configChanged()));
 }
 
