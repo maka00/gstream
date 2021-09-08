@@ -60,13 +60,36 @@ ApplicationWindow {
                 color: "red"
                 visible: false
             }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
+                Label {
+                    text: "Threshold 1:"
+                }
+                SpinBox {
+                    value: edgeVideoFilter.threshold1
+                    onValueModified: {
+                        edgeVideoFilter.threshold1 = Number(value)
+                    }
+                }
+
+                Label {
+                    text: "Threshold 2:"
+                }
+                SpinBox {
+                    value: edgeVideoFilter.threshold2
+                    onValueModified: {
+                        edgeVideoFilter.threshold2 = Number(value)
+                    }
+                }
+            }
             VideoOutput {
                 id: video
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 source: camera
                 autoOrientation: false
-                filters: [ edgeVideoFilter ]
+                filters: [edgeVideoFilter]
             }
 
             RowLayout {

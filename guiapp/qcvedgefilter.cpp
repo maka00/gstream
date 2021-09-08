@@ -55,15 +55,14 @@ cv::Mat QImage2Mat(const QImage & src)
 }
 
 QVideoFilterRunnable *qcvedgefilter::createFilterRunnable() {
-    return new qcvedgefilter_runnable();
+    return new qcvedgefilter_runnable(this);
 }
 
-qcvedgefilter::qcvedgefilter(QObject* parent) : QAbstractVideoFilter(parent) {
-
+qcvedgefilter::qcvedgefilter(QObject* parent) : QAbstractVideoFilter(parent), _threshold1(50), _threshold2(30) {
 }
 
-qcvedgefilter_runnable::qcvedgefilter_runnable() {
-
+qcvedgefilter_runnable::qcvedgefilter_runnable(qcvedgefilter* filter) : _filter(filter), _threshold1(50), _threshold2(30) {
+    QObject::connect(_filter,SIGNAL(configChanged()),this,SLOT(configChanged()));
 }
 
 QVideoFrame qcvedgefilter_runnable::run(QVideoFrame *input, const QVideoSurfaceFormat &surfaceFormat,
@@ -82,13 +81,23 @@ QVideoFrame qcvedgefilter_runnable::run(QVideoFrame *input, const QVideoSurfaceF
     cv::Mat flipped;
     auto img_frmt = image.format();
     img = QImage2Mat(image);
+    int t1 = ( float(_threshold1) * 400.0f ) / 100.0f;
+    int t2 = ( float(_threshold2) * 600.0f ) / 100.0f;
     cv::cvtColor(img, greyimg,cv::COLOR_BGR2GRAY);
     cv::GaussianBlur(greyimg,blurredimg,cv::Size(5,5),0);
-    cv::Canny(blurredimg,edges,100,300,3,false);
+    cv::Canny(blurredimg,edges,t1,t2,3,false);
     cv::flip(edges,flipped,1);
     QImage image_res;
     image_res = Mat2QImage(flipped);
     image_res = image_res.convertToFormat(img_frmt);
     input->unmap();
     return QVideoFrame{image_res};
+}
+
+void qcvedgefilter_runnable::configChanged() {
+    _threshold1 = _filter->_threshold1;
+    _threshold2 = _filter->_threshold2;
+    float t1 = ( float(_threshold1) * 400.0f ) / 100.0f;
+    float t2 = ( float(_threshold2) * 600.0f ) / 100.0f;
+    std::cout << "config changed [" << _threshold1 << " | " << _threshold2 << "] => using (" << t1 << "|" << t2 << ")" << std::endl;
 }
