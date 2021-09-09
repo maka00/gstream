@@ -15,6 +15,12 @@
 # Stereomatching 
 some results:
 
+| left image| right image |
+|---|---|
+|![image](data/im1.png)|![image](data/im2.png)|
+
+depth image:
+
 ![image](data/result.jpg)
 
 pointcloud data:
