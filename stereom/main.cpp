@@ -1,5 +1,9 @@
 #include <iostream>
 #include "ssd_match.h"
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/io.h>
+#include <pcl/io/ply_io.h>
 
 int main() {
     const int window_size = 6;
@@ -14,5 +18,14 @@ int main() {
     Stereo s(window_size, max_disparity, tranwin_size, cost);
     dis = s.stereo_match(left, right);
     cv::imwrite(outname, dis);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    for(int i = 0; i < dis.rows; i++) {
+        for (int j = 0; j < dis.cols; j++) {
+            int pt = dis.at<uchar>(i, j);
+            pcl::PointXYZ point = pcl::PointXYZ(i, j, pt);
+            cloud->push_back(point);
+        }
+    }
+    pcl::io::savePLYFileASCII("test.ply",*cloud);
     return 0;
 }

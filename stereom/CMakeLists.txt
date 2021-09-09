@@ -23,8 +23,9 @@ endif(WIN32)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
-find_package(Boost COMPONENTS filesystem iostreams system program_options timer REQUIRED)
+find_package(Boost 1.76.0 COMPONENTS filesystem iostreams system program_options timer REQUIRED)
 find_package( OpenCV REQUIRED )
+find_package(PCL 1.11 REQUIRED COMPONENTS common io)
 pkg_check_modules(GStreamer REQUIRED IMPORTED_TARGET gstreamer-1.0)
 pkg_check_modules(GLib REQUIRED IMPORTED_TARGET glib-2.0)
 
@@ -46,6 +47,7 @@ target_include_directories(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}
 
         PRIVATE
+        ${PCL_INCLUDE_DIRS}
         ${BOOST_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
 
@@ -66,6 +68,7 @@ target_link_libraries(${PROJECT_NAME}
         opencv_core
         opencv_videoio
         opencv_highgui
+        ${PCL_LIBRARIES}
         )
 target_compile_features(${PROJECT_NAME}
         PUBLIC
