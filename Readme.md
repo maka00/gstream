@@ -11,3 +11,12 @@
 |ocv01 |OpenCV basic example
 |papp |a Poco Webserver that processes a video stream
 |stereom | Simple stereomatching experiments
+
+# Stereomatching 
+some results:
+
+![image](data/result.jpg)
+
+pointcloud data:
+
+![image](data/pointcloud00.png)
