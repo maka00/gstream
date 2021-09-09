@@ -1,12 +1,15 @@
 #include "ssd_match.h"
-
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <execution>
 static inline int HammingDistance(int a, int b) { return static_cast<int>( __builtin_popcount(a ^ b)); }
 
 cv::Mat Stereo::rank_transform(cv::Mat image, int windowsize) {
-    int h = image.rows;
-    int w = image.cols;
+    const int h = image.rows;
+    const int w = image.cols;
     cv::Mat imgDisparity8U = cv::Mat(image.rows, image.cols, CV_8U);
-    int window_half = windowsize / 2;
+    const int window_half = windowsize / 2;
 
     for (int y = window_half; y < h - window_half; ++y) {
         for (int x = window_half; x < w - window_half; ++x) {
@@ -28,10 +31,10 @@ cv::Mat Stereo::rank_transform(cv::Mat image, int windowsize) {
 }
 
 cv::Mat Stereo::census_transform(cv::Mat image, int windowsize) {
-    int h = image.rows;
-    int w = image.cols;
+    const int h = image.rows;
+    const int w = image.cols;
     cv::Mat imgDisparity8U = cv::Mat(image.rows, image.cols, CV_8U);
-    int window_half = windowsize / 2;
+    const int window_half = windowsize / 2;
 
     for (int y = window_half; y < h - window_half; ++y) {
         for (int x = window_half; x < w - window_half; ++x) {
@@ -57,20 +60,22 @@ cv::Mat Stereo::census_transform(cv::Mat image, int windowsize) {
 }
 
 cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
-    int h = left.rows;
-    int w = left.cols;
+    const int h = left.rows;
+    const int w = left.cols;
     cv::Mat imgDisparity8U = cv::Mat(left.rows, left.cols, CV_8U);
-    int window_half = win_size_ / 2;
-    int adjust = 255 / max_disparity_;
+    const int window_half = win_size_ / 2;
+    const int adjust = 255 / max_disparity_;
     //decide which matching cost function to use
-    if (cost_ == "rank") {
+    if (cost_ == cost_function::rank) {
         left = Stereo::rank_transform(left, tran_win_size_);
         right = Stereo::rank_transform(right, tran_win_size_);
-    } else if (cost_ == "census") {
+    } else if (cost_ == cost_function::census) {
         left = Stereo::census_transform(left, tran_win_size_);
         right = Stereo::census_transform(right, tran_win_size_);
     }
-    for (int y = window_half; y < h - window_half; ++y) {
+    std::vector<int> rows(h - window_half);
+    std::iota(std::begin(rows), std::end(rows), window_half);
+    std::for_each(std::execution::par, std::begin(rows), std::end(rows),[&](const auto& y) {
         uchar *imgDisparity_y = imgDisparity8U.ptr(y);
         for (int x = window_half; x < w - window_half; ++x) {
             int prev_ssd = INT_MAX;
@@ -80,7 +85,7 @@ cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
                 int ssd_tmp = 0;
                 for (int v = -window_half; v < window_half; ++v) {
                     for (int u = -window_half; u < window_half; ++u) {
-                        if (cost_ == "census") {
+                        if (cost_ == cost_function::census) {
                             ssd_tmp = HammingDistance(left.at<uchar>(y + v, x + u),
                                                       right.at<uchar>(y + v, std::abs(x + u - off)));
                         } else {
@@ -96,6 +101,6 @@ cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
             }
             imgDisparity_y[x] = best_dis * adjust;
         }
-    }
+    });
     return imgDisparity8U;
 }
