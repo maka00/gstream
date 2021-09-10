@@ -62,7 +62,7 @@ cv::Mat Stereo::census_transform(cv::Mat image, int windowsize) {
 cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
     const int h = left.rows - 1;
     const int w = left.cols - 1;
-    cv::Mat imgDisparity8U = cv::Mat(left.rows, left.cols, CV_8U);
+    cv::Mat imgDisparity8U = cv::Mat(left.rows, left.cols, CV_8UC1,cv::Scalar::all(0));
     const int window_half = win_size_ / 2;
     const int adjust = 255 / max_disparity_;
     //decide which matching cost function to use
@@ -76,6 +76,7 @@ cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
     std::vector<int> rows(h - window_half);
     std::iota(std::begin(rows), std::end(rows), window_half);
     std::for_each(std::execution::par, std::begin(rows), std::end(rows),[&](const auto& y) {
+    //for (int y = window_half; y < h - window_half; ++y) {
         uchar *imgDisparity_y = imgDisparity8U.ptr(y);
         for (int x = window_half; x < w - window_half; ++x) {
             int prev_ssd = INT_MAX;
@@ -86,8 +87,13 @@ cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
                 for (int v = -window_half; v < window_half; ++v) {
                     for (int u = -window_half; u < window_half; ++u) {
                         if (cost_ == cost_function::census) {
-                            ssd_tmp = HammingDistance(left.at<uchar>(y + v, x + u),
-                                                      right.at<uchar>(y + v , std::abs(x + u - off)));
+                            auto i0 = std::clamp(y + v,0, h);
+                            auto i1 = x + u;
+                            uchar pix_left = left.at<uchar>(i0, i1);
+
+                            auto i2 = std::abs(x + u - off);
+                            uchar pix_right = right.at<uchar>(i0, i2);
+                            ssd_tmp = HammingDistance(pix_left, pix_right);
                         } else {
                             ssd_tmp = left.at<uchar>(y + v, x + u) - right.at<uchar>(y + v, x + u - off);
                         }
@@ -101,6 +107,7 @@ cv::Mat Stereo::stereo_match(cv::Mat left, cv::Mat right) {
             }
             imgDisparity_y[x] = best_dis * adjust;
         }
+    //}
     });
     return imgDisparity8U;
 }
