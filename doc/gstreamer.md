@@ -100,3 +100,13 @@ a=rtpmap:96 H264/90000
 ```
 also: disable automatic HW acceleration
 
+NVidia Plugins
+```
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true \
+        ! video/x-raw,width=2896,height=2896,framerate=1/1 \
+        ! queue \
+        ! nvvidconv ! 'video/x-raw(memory:NVMM),format=(string)I420' \
+        ! nvv4l2h264enc !  'video/x-h264, stream-format=(string)byte-stream' \
+        ! h264parse ! \
+        filesink location='raw_dual.h264' sync=false   
+```
