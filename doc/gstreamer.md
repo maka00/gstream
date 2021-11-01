@@ -110,3 +110,26 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true \
         ! h264parse ! \
         filesink location='raw_dual.h264' sync=false   
 ```
+
+## TS format
+
+### Recording in TS format (using splitmuxsink)
+```
+gst-launch-1.0 videotestsrc ! x264enc ! h264parse ! queue ! splitmuxsink muxer=mpegtsmux location=./test%02d.ts max-size-time=10000000000
+```
+
+
+### Sender
+```
+gst-launch-1.0 -v v4l2src ! "video/x-raw,width=800,height=600,framerate=15/1" ! queue ! videoconvert ! queue ! x264enc tune=zerolatency bitrate=3096 byte-stream=true threads=4 key-int-max=15 intra-refresh=true  ! queue ! mpegtsmux name=mux  ! queue ! udpsink host=127.0.0.1 port=5432
+```
+
+### Receiver
+```
+gst-launch-1.0 -v udpsrc  port=5432 ! tsdemux name=demux demux. ! queue !  h264parse ! queue !   avdec_h264 ! queue ! videoconvert ! queue ! autovideosink
+```
+
+### Playing TS files with GStreamer
+```
+gst-launch-1.0 filesrc location=test.ts ! tsdemux  !  h264parse ! avdec_h264 ! videoconvert ! ximagesink
+```
